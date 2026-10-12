@@ -4,15 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        pcmc: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0284c7',
-          600: '#0369a1',
-          700: '#075985',
-          800: '#0c4a6e',
-          900: '#082f49'
-        }
+        'pcmc-blue': '#245D9C',
+        'pcmc-blue-dark': '#1a4778',
+        'pcmc-blue-light': '#e9f1fa',
+        'pcmc-navy': '#15171D',
+        'pcmc-navy-light': '#1e2129',
+        'pcmc-gold': '#B79A68',
+        'pcmc-gold-dark': '#967b4d',
+        'pcmc-gold-light': '#f7f4ed',
+        'pcmc-bg': '#F4F6F9',
+        'pcmc-text': '#202936',
+        'pcmc-muted': '#64748B',
+        'pcmc-success': '#218653',
+        'pcmc-warning': '#D99A24',
+        'pcmc-error': '#C83D43'
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif']
       }
     }
   },
