@@ -255,7 +255,7 @@ export default function Home() {
       {/* ========================================================= */}
       {/* D. CIVIC SERVICES SECTION (Grid of 10 Categories)       */}
       {/* ========================================================= */}
-      <section id="services" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="services" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
         <div className="text-center max-w-3xl mx-auto mb-10 space-y-2">
           <div className="inline-block px-3 py-1 rounded-full bg-[#245D9C]/10 text-[#245D9C] font-bold text-xs uppercase tracking-wider">
             Municipal Department Services
@@ -453,9 +453,9 @@ export default function Home() {
       {/* ========================================================= */}
       {/* G. INTERACTIVE CIVIC ISSUE MAP                            */}
       {/* ========================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="map" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-xl font-extrabold text-[#15171D] flex items-center">
                 <MapPin className="w-5 h-5 mr-2 text-[#245D9C]" />
@@ -471,7 +471,7 @@ export default function Home() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700 outline-none"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-700 shadow-sm outline-none font-medium hover:border-slate-400 focus:ring-2 focus:ring-[#245D9C]"
               >
                 <option value="">All Categories</option>
                 {categories.map((c) => (
@@ -484,7 +484,7 @@ export default function Home() {
               <select
                 value={selectedWard}
                 onChange={(e) => setSelectedWard(e.target.value)}
-                className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700 outline-none"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-700 shadow-sm outline-none font-medium hover:border-slate-400 focus:ring-2 focus:ring-[#245D9C]"
               >
                 <option value="">All PCMC Wards</option>
                 {wards.map((w) => (
@@ -497,7 +497,7 @@ export default function Home() {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white text-slate-700 outline-none"
+                className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-700 shadow-sm outline-none font-medium hover:border-slate-400 focus:ring-2 focus:ring-[#245D9C]"
               >
                 <option value="">All Statuses</option>
                 <option value="pending">Under Review</option>
@@ -509,7 +509,7 @@ export default function Home() {
             </div>
           </div>
 
-          <MapView issues={issues} height="440px" />
+          <MapView issues={issues} height="460px" />
         </div>
       </section>
 
