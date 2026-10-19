@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
 import PriorityBadge from '../components/PriorityBadge';
 import Timeline from '../components/Timeline';
@@ -22,6 +23,7 @@ export default function TrackComplaint() {
   const [searchParams] = useSearchParams();
   const initialId = searchParams.get('id') || '';
 
+  const { isAdmin } = useAuth();
   const [complaintId, setComplaintId] = useState(initialId);
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -306,10 +308,19 @@ export default function TrackComplaint() {
           </div>
 
           {/* Link to Full Discussion / Detail */}
-          <div className="pt-4 flex justify-end">
+          <div className="pt-4 flex flex-wrap items-center justify-between gap-3">
+            {isAdmin && (
+              <Link
+                to={`/issues/${issue._id}`}
+                className="inline-flex items-center px-3.5 py-2 rounded-lg text-xs font-bold bg-[#D99A24]/15 text-[#967b4d] border border-[#D99A24]/30 hover:bg-[#D99A24]/25 transition"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-[#D99A24]" />
+                Officer Action: Assign to Squad & Update Status &rarr;
+              </Link>
+            )}
             <Link
               to={`/issues/${issue._id}`}
-              className="inline-flex items-center text-xs font-bold text-[#245D9C] hover:underline"
+              className="inline-flex items-center text-xs font-bold text-[#245D9C] hover:underline ml-auto"
             >
               Open Full Discussion & Upvoting Page &rarr;
             </Link>
