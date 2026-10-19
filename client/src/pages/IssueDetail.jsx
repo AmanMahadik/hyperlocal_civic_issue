@@ -403,7 +403,7 @@ export default function IssueDetail() {
                       {c.user?.name} {c.user?.role === 'admin' && '(PCMC Staff)'}
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      {new Date(c.createdAt).toLocaleDateString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(c.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
                     </span>
                   </div>
                   <p className="text-slate-700">{c.text}</p>

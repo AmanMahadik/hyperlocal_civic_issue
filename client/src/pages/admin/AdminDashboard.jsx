@@ -14,17 +14,17 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!authLoading && !isAdmin) {
       navigate('/login');
     }
-  }, [isAdmin, navigate]);
+  }, [authLoading, isAdmin, navigate]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -41,8 +41,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (!authLoading && isAdmin) {
+      fetchStats();
+    }
+  }, [authLoading, isAdmin]);
 
   if (loading) {
     return (

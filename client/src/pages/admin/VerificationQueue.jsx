@@ -7,7 +7,7 @@ import RejectModal from '../../components/RejectModal';
 import { ShieldCheck, Check, X, MapPin, Calendar, ExternalLink } from 'lucide-react';
 
 export default function VerificationQueue() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [queue, setQueue] = useState([]);
@@ -16,10 +16,10 @@ export default function VerificationQueue() {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!authLoading && !isAdmin) {
       navigate('/login');
     }
-  }, [isAdmin, navigate]);
+  }, [authLoading, isAdmin, navigate]);
 
   const fetchQueue = async () => {
     setLoading(true);
@@ -36,8 +36,10 @@ export default function VerificationQueue() {
   };
 
   useEffect(() => {
-    fetchQueue();
-  }, []);
+    if (!authLoading && isAdmin) {
+      fetchQueue();
+    }
+  }, [authLoading, isAdmin]);
 
   const handleVerify = async (id) => {
     try {
@@ -70,6 +72,15 @@ export default function VerificationQueue() {
       setActionLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center text-slate-500 flex items-center justify-center space-x-2">
+        <div className="w-5 h-5 border-2 border-[#245D9C] border-t-transparent rounded-full animate-spin"></div>
+        <span>Verifying administrative authorization...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -152,7 +163,7 @@ export default function VerificationQueue() {
                         </span>
                         <span className="flex items-center">
                           <Calendar className="w-3 h-3 mr-1 text-slate-400" />
-                          {new Date(issue.createdAt).toLocaleDateString('en-IN', {
+                          {new Date(issue.createdAt).toLocaleString('en-IN', {
                             dateStyle: 'medium',
                             timeStyle: 'short'
                           })}
