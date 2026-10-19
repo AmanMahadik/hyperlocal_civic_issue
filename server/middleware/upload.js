@@ -31,36 +31,42 @@ const upload = multer({
   fileFilter
 });
 
-// Helper to save buffer either to Cloudinary or locally
+// Helper to save buffer either to Cloudinary or locally with automatic fallback
 const saveImageBuffer = async (buffer, originalname, folder = 'pcmc_civic') => {
   if (isCloudinaryConfigured()) {
-    return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder,
-          transformation: [{ width: 1280, height: 1280, crop: 'limit', quality: 'auto' }]
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve({
-            url: result.secure_url,
-            publicId: result.public_id
-          });
-        }
-      );
-      Readable.from(buffer).pipe(uploadStream);
-    });
-  } else {
-    // Local file fallback
-    const ext = path.extname(originalname) || '.jpg';
-    const filename = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
-    const filePath = path.join(uploadsDir, filename);
-    await fs.promises.writeFile(filePath, buffer);
-    return {
-      url: `/uploads/${filename}`,
-      publicId: filename
-    };
+    try {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            transformation: [{ width: 1280, height: 1280, crop: 'limit', quality: 'auto' }]
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve({
+              url: result.secure_url,
+              publicId: result.public_id
+            });
+          }
+        );
+        Readable.from(buffer).pipe(uploadStream);
+      });
+      return uploadResult;
+    } catch (cloudinaryErr) {
+      console.warn('[Cloudinary Error - Falling back to local disk storage]:', cloudinaryErr.message);
+      // Fall through to local storage
+    }
   }
+
+  // Local file fallback
+  const ext = path.extname(originalname) || '.jpg';
+  const filename = `${folder}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+  const filePath = path.join(uploadsDir, filename);
+  await fs.promises.writeFile(filePath, buffer);
+  return {
+    url: `/uploads/${filename}`,
+    publicId: filename
+  };
 };
 
 // Helper to remove images if needed
