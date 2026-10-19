@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import IssueCard from '../components/IssueCard';
 import MapView from '../components/MapView';
+import pcmcBhavanHero from '../assets/pcmc-bhavan.png';
 import {
   AlertTriangle,
   Trash2,
@@ -180,12 +181,12 @@ export default function Home() {
         {/* Background Urban Photograph with municipal tone */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1920&auto=format&fit=crop&q=80"
-            alt="PCMC Civic Infrastructure"
-            className="w-full h-full object-cover object-center filter brightness-90"
+            src={pcmcBhavanHero}
+            alt="PCMC Mahanagarpalika Bhavan"
+            className="w-full h-full object-cover object-center filter brightness-95"
           />
           {/* Municipal Blue & Dark Translucent Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#15171D]/95 via-[#15171D]/80 to-[#245D9C]/50 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#15171D]/90 via-[#15171D]/75 to-[#245D9C]/45 backdrop-blur-[0.5px]"></div>
           {/* Subtle civic watermark / graphic lines */}
           <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-[#245D9C] via-[#B79A68] to-[#245D9C]"></div>
         </div>
