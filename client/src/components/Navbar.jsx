@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Show, UserButton } from '@clerk/react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAccessibility } from '../context/AccessibilityContext';
@@ -13,7 +14,6 @@ import {
   ShieldCheck,
   Menu,
   X,
-  LogOut,
   LogIn
 } from 'lucide-react';
 
@@ -233,27 +233,23 @@ export default function Navbar() {
               )}
             </nav>
 
-            {/* Auth / Account Profile / Login */}
+            {/* Auth / Account Profile / Login with Clerk */}
             <div className="hidden lg:flex items-center space-x-2 pl-2 border-l border-slate-200 flex-shrink-0">
-              {user ? (
-                <div className="flex items-center space-x-2">
+              <Show when="signed-in">
+                <div className="flex items-center space-x-2.5">
                   <div className="text-right">
-                    <div className="text-xs font-bold text-[#15171D] leading-tight truncate max-w-[110px]">
-                      {user.name}
+                    <div className="text-xs font-bold text-[#15171D] leading-tight truncate max-w-[120px]">
+                      {user?.name || 'Citizen'}
                     </div>
                     <span className="text-[10px] font-semibold text-[#245D9C] uppercase tracking-wider block">
-                      {user.role === 'admin' ? 'Officer' : 'Citizen'}
+                      {user?.role === 'admin' ? 'Officer' : 'Citizen'}
                     </span>
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    title="Log out"
-                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
+                  <UserButton afterSignOutUrl="/" />
                 </div>
-              ) : (
+              </Show>
+
+              <Show when="signed-out">
                 <div className="flex items-center space-x-1.5">
                   <Link
                     to="/login"
@@ -269,7 +265,7 @@ export default function Navbar() {
                     Register
                   </Link>
                 </div>
-              )}
+              </Show>
             </div>
 
             {/* Mobile menu hamburger button */}
@@ -352,23 +348,17 @@ export default function Navbar() {
             )}
 
             <div className="pt-3 border-t border-slate-100">
-              {user ? (
-                <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg">
-                  <div>
-                    <div className="text-sm font-bold text-slate-800">{user.name}</div>
-                    <div className="text-xs text-slate-500 capitalize">{user.role}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="text-xs text-rose-600 font-bold"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
+              <Show when="signed-in">
+                 <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg">
+                   <div>
+                     <div className="text-sm font-bold text-slate-800">{user?.name || 'Citizen'}</div>
+                     <div className="text-xs text-slate-500 capitalize">{user?.role || 'citizen'}</div>
+                   </div>
+                   <UserButton afterSignOutUrl="/" />
+                 </div>
+              </Show>
+
+              <Show when="signed-out">
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <Link
                     to="/login"
@@ -385,7 +375,7 @@ export default function Navbar() {
                     Register
                   </Link>
                 </div>
-              )}
+              </Show>
             </div>
           </div>
         )}

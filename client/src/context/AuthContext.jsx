@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useUser, useClerk } from '@clerk/react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -8,58 +9,60 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('pcmc_token') || null);
   const [loading, setLoading] = useState(true);
 
+  const { isLoaded: clerkLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+
+  // Synchronize Clerk user with backend DB & obtain API JWT token
   useEffect(() => {
-    const fetchMe = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await api.get('/auth/me');
-        if (res.data.success) {
-          setUser(res.data.data);
-        } else {
-          logout();
+    const syncClerkUser = async () => {
+      if (!clerkLoaded) return;
+
+      if (isSignedIn && clerkUser) {
+        try {
+          const email = clerkUser.primaryEmailAddress?.emailAddress;
+          const name = clerkUser.fullName || clerkUser.firstName || email?.split('@')[0];
+          const phone = clerkUser.primaryPhoneNumber?.phoneNumber || '';
+
+          const res = await api.post('/auth/clerk-sync', {
+            clerkId: clerkUser.id,
+            email,
+            name,
+            phone,
+            role: clerkUser.publicMetadata?.role || (email?.endsWith('@pcmc.gov.in') ? 'admin' : 'citizen')
+          });
+
+          if (res.data.success) {
+            const { user: userData, token: jwtToken } = res.data.data;
+            localStorage.setItem('pcmc_token', jwtToken);
+            setToken(jwtToken);
+            setUser(userData);
+          }
+        } catch (err) {
+          console.error('Failed to sync Clerk user with backend:', err);
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('Failed to authenticate token:', err);
-        logout();
-      } finally {
+      } else {
+        // When signed out of Clerk, clear token & local state
+        localStorage.removeItem('pcmc_token');
+        setToken(null);
+        setUser(null);
         setLoading(false);
       }
     };
 
-    fetchMe();
-  }, [token]);
+    syncClerkUser();
+  }, [clerkLoaded, isSignedIn, clerkUser]);
 
-  const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    if (res.data.success) {
-      const { user: userData, token: jwtToken } = res.data.data;
-      localStorage.setItem('pcmc_token', jwtToken);
-      setToken(jwtToken);
-      setUser(userData);
-      return { success: true };
-    }
-    return { success: false, message: res.data.message };
-  };
-
-  const register = async (formData) => {
-    const res = await api.post('/auth/register', formData);
-    if (res.data.success) {
-      const { user: userData, token: jwtToken } = res.data.data;
-      localStorage.setItem('pcmc_token', jwtToken);
-      setToken(jwtToken);
-      setUser(userData);
-      return { success: true };
-    }
-    return { success: false, message: res.data.message };
-  };
-
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem('pcmc_token');
     setToken(null);
     setUser(null);
+    try {
+      await signOut();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'superadmin');
@@ -69,10 +72,8 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         token,
-        loading,
+        loading: loading || !clerkLoaded,
         isAdmin,
-        login,
-        register,
         logout
       }}
     >

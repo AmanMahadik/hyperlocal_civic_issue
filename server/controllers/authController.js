@@ -128,8 +128,61 @@ const getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Sync or provision user from Clerk session
+// @route   POST /api/auth/clerk-sync
+// @access  Public
+const clerkSync = async (req, res, next) => {
+  try {
+    const { clerkId, email, name, phone, role } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required from Clerk'
+      });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // Auto-create user linked from Clerk
+      const randomPassword = Math.random().toString(36).slice(-10) + '!A1';
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+      // Check if email domain indicates PCMC admin or explicitly requested
+      let assignedRole = 'citizen';
+      if (email.toLowerCase().endsWith('@pcmc.gov.in') || role === 'admin') {
+        assignedRole = 'admin';
+      }
+
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email: email.toLowerCase(),
+        phone: phone || '',
+        passwordHash,
+        role: assignedRole,
+        isActive: true
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      data: {
+        user: user.toSafeObject(),
+        token
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
-  getMe
+  getMe,
+  clerkSync
 };
