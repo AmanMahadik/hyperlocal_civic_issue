@@ -23,13 +23,17 @@ export const AuthProvider = ({ children }) => {
           const name = clerkUser.fullName || clerkUser.firstName || email?.split('@')[0];
           const phone = clerkUser.primaryPhoneNumber?.phoneNumber || '';
 
-          const res = await api.post('/auth/clerk-sync', {
-            clerkId: clerkUser.id,
-            email,
-            name,
-            phone,
-            role: clerkUser.publicMetadata?.role || (email?.endsWith('@pcmc.gov.in') ? 'admin' : 'citizen')
-          });
+            const isAdminEmail =
+              email?.endsWith('@pcmc.gov.in') ||
+              ['mahadik.aman8@gmail.com', 'amanmahadik8@gmail.com'].includes(email?.toLowerCase());
+
+            const res = await api.post('/auth/clerk-sync', {
+              clerkId: clerkUser.id,
+              email,
+              name,
+              phone,
+              role: clerkUser.publicMetadata?.role || (isAdminEmail ? 'admin' : 'citizen')
+            });
 
           if (res.data.success) {
             const { user: userData, token: jwtToken } = res.data.data;

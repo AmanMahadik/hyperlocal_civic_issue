@@ -128,6 +128,18 @@ const getMe = async (req, res, next) => {
   }
 };
 
+// Designated admin emails & domain checker
+const ADMIN_EMAILS = [
+  'admin@pcmc.gov.in',
+  'mahadik.aman8@gmail.com',
+  'amanmahadik8@gmail.com'
+];
+
+const checkIsAdmin = (email = '') => {
+  const normalized = (email || '').toLowerCase().trim();
+  return normalized.endsWith('@pcmc.gov.in') || ADMIN_EMAILS.includes(normalized);
+};
+
 // @desc    Sync or provision user from Clerk session
 // @route   POST /api/auth/clerk-sync
 // @access  Public
@@ -142,7 +154,10 @@ const clerkSync = async (req, res, next) => {
       });
     }
 
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: normalizedEmail });
+
+    const shouldBeAdmin = checkIsAdmin(normalizedEmail) || role === 'admin';
 
     if (!user) {
       // Auto-create user linked from Clerk
@@ -150,20 +165,18 @@ const clerkSync = async (req, res, next) => {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(randomPassword, salt);
 
-      // Check if email domain indicates PCMC admin or explicitly requested
-      let assignedRole = 'citizen';
-      if (email.toLowerCase().endsWith('@pcmc.gov.in') || role === 'admin') {
-        assignedRole = 'admin';
-      }
-
       user = await User.create({
-        name: name || email.split('@')[0],
-        email: email.toLowerCase(),
+        name: name || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
         phone: phone || '',
         passwordHash,
-        role: assignedRole,
+        role: shouldBeAdmin ? 'admin' : 'citizen',
         isActive: true
       });
+    } else if (shouldBeAdmin && user.role !== 'admin' && user.role !== 'superadmin') {
+      // Elevate existing account to admin
+      user.role = 'admin';
+      await user.save();
     }
 
     const token = generateToken(user._id);
