@@ -147,7 +147,7 @@ export default function Home() {
         api.get('/issues', { params }),
         api.get('/categories'),
         api.get('/wards'),
-        api.get('/admin/stats').catch(() => ({ data: { success: false } }))
+        api.get('/issues/public-stats').catch(() => ({ data: { success: false } }))
       ]);
 
       if (issuesRes.data.success) setIssues(issuesRes.data.data);

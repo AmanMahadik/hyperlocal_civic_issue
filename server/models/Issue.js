@@ -139,6 +139,15 @@ const issueSchema = new mongoose.Schema(
       ref: 'User',
       default: null
     },
+    workOrder: {
+      workOrderId: { type: String, default: '' },
+      squadName: { type: String, default: '' },
+      squadLead: { type: String, default: '' },
+      leadContact: { type: String, default: '' },
+      vehicleNumber: { type: String, default: '' },
+      dispatchedAt: { type: Date, default: null },
+      instructions: { type: String, default: '' }
+    },
     statusHistory: [statusHistorySchema],
     dueDate: {
       type: Date,

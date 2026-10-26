@@ -6,6 +6,8 @@ import StatusBadge from '../components/StatusBadge';
 import PriorityBadge from '../components/PriorityBadge';
 import Timeline from '../components/Timeline';
 import RejectModal from '../components/RejectModal';
+import DispatchSquadModal from '../components/DispatchSquadModal';
+import StartWorkModal from '../components/StartWorkModal';
 import MapView from '../components/MapView';
 import {
   ThumbsUp,
@@ -19,7 +21,11 @@ import {
   RotateCcw,
   MessageSquare,
   Upload,
-  AlertCircle
+  AlertCircle,
+  Truck,
+  Wrench,
+  Phone,
+  FileText
 } from 'lucide-react';
 
 export default function IssueDetail() {
@@ -32,6 +38,8 @@ export default function IssueDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDispatchModal, setShowDispatchModal] = useState(false);
+  const [showStartWorkModal, setShowStartWorkModal] = useState(false);
 
   // Admin resolution photo state
   const [resolutionFiles, setResolutionFiles] = useState([]);
@@ -141,16 +149,37 @@ export default function IssueDetail() {
     }
   };
 
-  const handleAssign = async () => {
+  const handleDispatchConfirm = async (dispatchData) => {
     try {
       setActionLoading(true);
       const res = await api.patch(`/issues/${id}/assign`, {
         assignedTo: user._id,
-        note: `Assigned to ${issue.category?.department || 'Department Officer'}`
+        workOrder: dispatchData
       });
-      if (res.data.success) fetchIssueData();
+      if (res.data.success) {
+        setShowDispatchModal(false);
+        fetchIssueData();
+      }
     } catch (err) {
-      alert(err.response?.data?.message || 'Assignment failed');
+      alert(err.response?.data?.message || 'Dispatch failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartWorkConfirm = async ({ note }) => {
+    try {
+      setActionLoading(true);
+      const res = await api.patch(`/issues/${id}/status`, {
+        status: 'in_progress',
+        note
+      });
+      if (res.data.success) {
+        setShowStartWorkModal(false);
+        fetchIssueData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to start work');
     } finally {
       setActionLoading(false);
     }
@@ -218,6 +247,24 @@ export default function IssueDetail() {
         isOpen={showRejectModal}
         onClose={() => setShowRejectModal(false)}
         onConfirm={handleReject}
+        loading={actionLoading}
+      />
+
+      {/* Dispatch Squad Modal */}
+      <DispatchSquadModal
+        isOpen={showDispatchModal}
+        onClose={() => setShowDispatchModal(false)}
+        onConfirm={handleDispatchConfirm}
+        issue={issue}
+        loading={actionLoading}
+      />
+
+      {/* Start Work Modal */}
+      <StartWorkModal
+        isOpen={showStartWorkModal}
+        onClose={() => setShowStartWorkModal(false)}
+        onConfirm={handleStartWorkConfirm}
+        issue={issue}
         loading={actionLoading}
       />
 
@@ -339,6 +386,67 @@ export default function IssueDetail() {
               </div>
             )}
           </div>
+
+          {/* Official PCMC Work Order & Field Dispatch Card */}
+          {issue.workOrder?.workOrderId && (
+            <div className="bg-gradient-to-r from-purple-50 via-slate-50 to-indigo-50 rounded-2xl border border-purple-200 p-5 shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-purple-200/60 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-8 h-8 rounded-lg bg-purple-700 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                    WO
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-purple-950 tracking-wide uppercase">
+                      Official PCMC Field Work Order
+                    </h3>
+                    <p className="text-xs font-mono text-purple-700 font-bold">
+                      #{issue.workOrder.workOrderId}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] px-3 py-1 rounded-full bg-purple-100 text-purple-800 font-bold uppercase tracking-wider">
+                  {issue.status === 'assigned' ? 'Squad Dispatched' : 'Active On-Site Work'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-semibold">Assigned Field Unit</span>
+                  <span className="font-bold text-slate-900">{issue.workOrder.squadName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-semibold">Field Supervisor & Phone</span>
+                  <span className="font-semibold text-slate-800">
+                    {issue.workOrder.squadLead} {issue.workOrder.leadContact && `(${issue.workOrder.leadContact})`}
+                  </span>
+                </div>
+                {issue.workOrder.vehicleNumber && (
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase font-semibold">Machinery / Vehicle</span>
+                    <span className="font-mono font-medium text-slate-800">{issue.workOrder.vehicleNumber}</span>
+                  </div>
+                )}
+                {issue.workOrder.dispatchedAt && (
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase font-semibold">Dispatch Timestamp</span>
+                    <span className="text-slate-700">
+                      {new Date(issue.workOrder.dispatchedAt).toLocaleString('en-IN', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {issue.workOrder.instructions && (
+                <div className="p-3 rounded-xl bg-white border border-purple-100 text-xs text-slate-700 shadow-sm">
+                  <span className="font-bold text-purple-950 block text-[10px] uppercase mb-0.5">Directives / Scope:</span>
+                  {issue.workOrder.instructions}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description & Address */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
@@ -481,14 +589,15 @@ export default function IssueDetail() {
               {(issue.status === 'verified' || issue.status === 'reopened') && (
                 <div className="space-y-2">
                   <p className="text-xs text-amber-800">
-                    Assign issue to department field squad.
+                    Assign issue to department field squad with official Work Order.
                   </p>
                   <button
-                    onClick={handleAssign}
+                    onClick={() => setShowDispatchModal(true)}
                     disabled={actionLoading}
-                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-lg shadow"
+                    className="w-full py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs rounded-lg shadow flex items-center justify-center transition"
                   >
-                    Assign to {issue.category?.department}
+                    <Truck className="w-3.5 h-3.5 mr-1.5" />
+                    Issue Work Order & Dispatch Squad
                   </button>
                 </div>
               )}
@@ -496,12 +605,16 @@ export default function IssueDetail() {
               {/* Status: assigned -> Move to in_progress */}
               {issue.status === 'assigned' && (
                 <div className="space-y-2">
+                  <p className="text-xs text-indigo-900">
+                    Squad arrived at location? Check-in team to begin repair work.
+                  </p>
                   <button
-                    onClick={() => handleStatusUpdate('in_progress')}
+                    onClick={() => setShowStartWorkModal(true)}
                     disabled={actionLoading}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow flex items-center justify-center transition"
                   >
-                    Start Work (Mark In Progress)
+                    <Wrench className="w-3.5 h-3.5 mr-1.5" />
+                    Confirm Site Arrival & Start Work
                   </button>
                 </div>
               )}

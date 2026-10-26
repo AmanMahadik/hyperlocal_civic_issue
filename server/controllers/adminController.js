@@ -150,12 +150,12 @@ const rejectIssue = async (req, res, next) => {
   }
 };
 
-// @desc    Assign issue to officer / field agent
+// @desc    Assign issue to officer / field squad with official Work Order
 // @route   PATCH /api/issues/:id/assign
 // @access  Private (Admin)
 const assignIssue = async (req, res, next) => {
   try {
-    const { assignedTo, note } = req.body;
+    const { assignedTo, note, workOrder } = req.body;
 
     const issue = await Issue.findById(req.params.id);
     if (!issue) {
@@ -176,11 +176,39 @@ const assignIssue = async (req, res, next) => {
       issue.assignedTo = assignedTo;
     }
 
+    const generatedWoId = `WO-PCMC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    if (workOrder) {
+      issue.workOrder = {
+        workOrderId: workOrder.workOrderId || generatedWoId,
+        squadName: workOrder.squadName || 'PCMC Rapid Action Field Squad',
+        squadLead: workOrder.squadLead || 'Field Supervisor',
+        leadContact: workOrder.leadContact || '',
+        vehicleNumber: workOrder.vehicleNumber || '',
+        dispatchedAt: new Date(),
+        instructions: workOrder.instructions || ''
+      };
+    } else {
+      issue.workOrder = {
+        workOrderId: generatedWoId,
+        squadName: 'PCMC Field Response Squad',
+        squadLead: 'Ward Supervisor',
+        leadContact: '',
+        vehicleNumber: '',
+        dispatchedAt: new Date(),
+        instructions: note || 'Dispatched for site inspection and resolution'
+      };
+    }
+
+    const auditNote = workOrder?.squadName
+      ? `Work Order #${issue.workOrder.workOrderId} dispatched to ${issue.workOrder.squadName} (Supervisor: ${issue.workOrder.squadLead || 'Assigned'}, Contact: ${issue.workOrder.leadContact || 'N/A'}${issue.workOrder.vehicleNumber ? `, Vehicle: ${issue.workOrder.vehicleNumber}` : ''}). Instructions: ${issue.workOrder.instructions || 'Standard repair procedure'}`
+      : note || `Dispatched Work Order #${issue.workOrder.workOrderId} to field squad`;
+
     issue.status = 'assigned';
     issue.statusHistory.push({
       status: 'assigned',
       changedBy: req.user._id,
-      note: note || 'Issue assigned to departmental team',
+      note: auditNote,
       at: new Date()
     });
 
@@ -193,7 +221,7 @@ const assignIssue = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Issue assigned successfully',
+      message: `Work Order #${issue.workOrder.workOrderId} dispatched successfully`,
       data: updated
     });
   } catch (error) {

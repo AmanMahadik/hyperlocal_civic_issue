@@ -15,10 +15,14 @@ const {
   verifyIssue,
   rejectIssue,
   assignIssue,
-  updateStatus
+  updateStatus,
+  getDashboardStats
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
+
+// Public telemetry metrics (accessible to all citizens)
+router.get('/public-stats', getDashboardStats);
 
 // Base collection routes
 router.route('/')

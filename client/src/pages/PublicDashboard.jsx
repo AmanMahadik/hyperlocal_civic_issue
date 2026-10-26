@@ -33,7 +33,7 @@ export default function PublicDashboard() {
       setLoading(true);
       try {
         const [statsRes, issuesRes] = await Promise.all([
-          api.get('/admin/stats').catch(() => ({ data: { success: false } })),
+          api.get('/issues/public-stats').catch(() => ({ data: { success: false } })),
           api.get('/issues?limit=50')
         ]);
 
