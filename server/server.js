@@ -28,19 +28,27 @@ app.use(
 );
 
 // CORS
+const clientUrl = (process.env.CLIENT_URL || '').replace(/\/$/, '');
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrl,
+  'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173'
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/$/, '');
+      if (
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
         callback(null, true);
       } else {
-        callback(null, true); // Permissive in local dev
+        callback(null, true); // Fallback to permissive
       }
     },
     credentials: true
